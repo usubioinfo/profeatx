@@ -10,6 +10,6 @@ You can run ProFeatX using the following command:
 
 `./profeatx -i <input> -o <output> -e <encoding>`
 
-In order to check the help:
+In order to see the help:
 
 `./profeatx --help`
