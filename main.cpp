@@ -5,7 +5,6 @@
 #include <string.h>
 #include <string>
 #include <omp.h>
-#include "zlib/zlib.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <map>
