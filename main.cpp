@@ -629,7 +629,10 @@ int main (int argc, char* argv[])
         {
             vector<double> encodedProtein = TPC(seqs[i], allowed, keys);
             #pragma omp critical
-            encoded.push_back(encodedProtein);
+            {
+                seqNames.push_back(names[i]);
+                encoded.push_back(encodedProtein);
+            }
         }
     }
 
