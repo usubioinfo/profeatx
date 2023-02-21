@@ -14,6 +14,26 @@
 #include "initData.cpp"
 using namespace std;
 
+vector<string> splitString(string s, string delimiter)
+{
+    size_t pos = 0;
+    string token;
+    vector<string> split;
+    while ((pos = s.find(delimiter)) != string::npos) 
+    {
+        token = s.substr(0, pos);
+        if (!token.empty())
+        {
+            split.push_back(token);
+        }
+        s.erase(0, pos + delimiter.length());
+    }
+    if (!s.empty())
+        split.push_back(s);
+
+    return split;
+}
+
 void swapDouble(double* a, double* b)
 {
     double t = *a;
@@ -82,6 +102,17 @@ static int checkFastaSameLength(vector<string> seqs)
     {
         if (seq.length() != length)
             return -1;
+    }
+    return length;
+}
+
+static int checkMinLength(vector<string> seqs)
+{
+    int length = seqs[0].length();
+    for (string const &seq : seqs)
+    {
+        if (seq.length() < length)
+            length = seq.length();
     }
     return length;
 }
@@ -1204,21 +1235,20 @@ static vector<double> SSPB(const string& seq, const string& seqName, const strin
                     goto endLoop;
                 aas.push_back(line[0]);
             }
-            else if ((counter == 3 && type.compare("ss2") == 0) || (counter == 7 && type.compare("spXout") == 0))
+            else if ((counter == 3 && type.compare("ss2") == 0) || (counter == 11 && type.compare("spd33") == 0) || (counter == 7 && type.compare("spXout") == 0))
             {
                 double val = stof(line);
                 probs['H'].push_back(val);
             }
-            else if ((counter == 4 && type.compare("ss2") == 0) || (counter == 5 && type.compare("spXout") == 0))
+            else if ((counter == 4 && type.compare("ss2") == 0) || (counter == 12 && type.compare("spd33") == 0) || (counter == 5 && type.compare("spXout") == 0))
             {
                 double val = stof(line);
                 probs['E'].push_back(val);
             }
-            else if ((counter == 5 && type.compare("ss2") == 0) || (counter == 6 && type.compare("spXout") == 0))
+            else if ((counter == 5 && type.compare("ss2") == 0) || (counter == 10 && type.compare("spd33") == 0) || (counter == 6 && type.compare("spXout") == 0))
             {
                 double val = stof(line);
                 probs['C'].push_back(val);
-                break;
             }
         }
         endLoop:;
@@ -1291,21 +1321,20 @@ static vector<double> SSPAC(const string& seq, const string& seqName, const stri
                     goto endLoop;
                 aas.push_back(line[0]);
             }
-            else if ((counter == 3 && type.compare("ss2") == 0) || (counter == 7 && type.compare("spXout") == 0))
+            else if ((counter == 3 && type.compare("ss2") == 0) || (counter == 11 && type.compare("spd33") == 0) || (counter == 7 && type.compare("spXout") == 0))
             {
                 double val = stof(line);
                 probs['H'].push_back(val);
             }
-            else if ((counter == 4 && type.compare("ss2") == 0) || (counter == 5 && type.compare("spXout") == 0))
+            else if ((counter == 4 && type.compare("ss2") == 0) || (counter == 12 && type.compare("spd33") == 0) || (counter == 5 && type.compare("spXout") == 0))
             {
                 double val = stof(line);
                 probs['E'].push_back(val);
             }
-            else if ((counter == 5 && type.compare("ss2") == 0) || (counter == 6 && type.compare("spXout") == 0))
+            else if ((counter == 5 && type.compare("ss2") == 0) || (counter == 10 && type.compare("spd33") == 0) || (counter == 6 && type.compare("spXout") == 0))
             {
                 double val = stof(line);
                 probs['C'].push_back(val);
-                break;
             }
         }
         endLoop:;
@@ -1346,55 +1375,21 @@ static vector<double> Disorder(const string& seq, const string& seqName, const s
 
     // Read disorder file
     string line;
-    string aas;
-    vector<double> scores;
-    getline(file, line);
-    while (line[0] != '-')
+    getline(file, line);    
+    while (line[0] != '>')
     {
         getline(file, line); 
     }
-    while (getline(file, line))
+    getline(file, line); 
+    getline(file, line); 
+    getline(file, line); 
+
+    vector<string> scores = splitString(line, ",");
+
+    for (string const &score : scores)
     {
-        int counter = 0;
-        istringstream iss(line);
-        for (string line; iss >> line; counter++) 
-        {
-            if (line[0] == '=')
-                break; 
-            else if (counter == 1)
-            {
-                bool exists = false;
-                for (char const &c : allowed)
-                {
-                    if (line[0] == c)
-                    {
-                        exists = true;
-                        break;
-                    }
-                }
-                if (!exists)
-                    goto endLoop;
-                aas.push_back(line[0]);
-            }
-            else if (counter == 2)
-            {
-                double val = stof(line);
-                scores.push_back(val);
-                break;
-            };
-        }
-        endLoop:;
-    }
-    size_t found = aas.find(seq);
-    if (found == string::npos)
-        cout << "Error: Sequence " << seqName << " not found in the file.";
-    else
-    {
-        int l = seq.length();
-        for (int i = found; i < found + l; i++)
-        {
-            encoded.push_back(scores[i]);
-        }
+        double val = stof(score);
+        encoded.push_back(val);
     }
 
     return encoded;
@@ -1406,63 +1401,28 @@ static vector<double> DisorderC(const string& seq, const string& seqName, const 
 
     // Read disorder file
     string line;
-    string aas;
-    string types;
-    getline(file, line);
-    while (line[0] != '-')
+    getline(file, line);    
+    while (line[0] != '>')
     {
         getline(file, line); 
     }
-    while (getline(file, line))
+    getline(file, line); 
+    getline(file, line); 
+
+    vector<string> types = splitString(line, ",");
+
+    int l = seq.length();
+    double order = 0;
+    double disorder = 0;
+    for (string const &type : types)
     {
-        int counter = 0;
-        istringstream iss(line);
-        for (string line; iss >> line; counter++) 
-        {
-            if (line[0] == '=')
-                break; 
-            else if (counter == 1)
-            {
-                bool exists = false;
-                for (char const &c : allowed)
-                {
-                    if (line[0] == c)
-                    {
-                        exists = true;
-                        break;
-                    }
-                }
-                if (!exists)
-                    goto endLoop;
-                aas.push_back(line[0]);
-            }
-            else if (counter == 3)
-            {
-                char val = line[0];
-                types.push_back(val);
-                break;
-            };
-        }
-        endLoop:;
+        if (type[0] == '1')
+            disorder++;
+        else
+            order++;
     }
-    size_t found = aas.find(seq);
-    if (found == string::npos)
-        cout << "Error: Sequence " << seqName << " not found in the file.";
-    else
-    {
-        int l = seq.length();
-        double order = 0;
-        double disorder = 0;
-        for (int i = found; i < found + l; i++)
-        {
-            if (types[i] == 'D')
-                disorder++;
-            else
-                order++;
-        }
-        encoded.push_back(disorder / l);
-        encoded.push_back(order / l);
-    }
+    encoded.push_back(disorder / l);
+    encoded.push_back(order / l);
 
     return encoded;
 }
@@ -1473,74 +1433,40 @@ static vector<double> DisorderB(const string& seq, const string& seqName, const 
 
     // Read disorder file
     string line;
-    string aas;
-    string types;
-    getline(file, line);
-    while (line[0] != '-')
+    getline(file, line);    
+    while (line[0] != '>')
     {
         getline(file, line); 
     }
-    while (getline(file, line))
+    getline(file, line); 
+    getline(file, line); 
+
+    vector<string> types = splitString(line, ",");
+
+    int l = seq.length();
+    double order = 0;
+    double disorder = 0;
+    for (string const &type : types)
     {
-        int counter = 0;
-        istringstream iss(line);
-        for (string line; iss >> line; counter++) 
+        if (type[0] == '1')
         {
-            if (line[0] == '=')
-                break; 
-            else if (counter == 1)
-            {
-                bool exists = false;
-                for (char const &c : allowed)
-                {
-                    if (line[0] == c)
-                    {
-                        exists = true;
-                        break;
-                    }
-                }
-                if (!exists)
-                    goto endLoop;
-                aas.push_back(line[0]);
-            }
-            else if (counter == 3)
-            {
-                char val = line[0];
-                types.push_back(val);
-                break;
-            };
+            encoded.push_back(0.0000000);
+            encoded.push_back(1.0000000);
         }
-        endLoop:;
-    }
-    size_t found = aas.find(seq);
-    if (found == string::npos)
-        cout << "Error: Sequence " << seqName << " not found in the file.";
-    else
-    {
-        int l = seq.length();
-        for (int i = found; i < found + l; i++)
+        else
         {
-            if (types[i] == 'D')
-            {
-                encoded.push_back(0.0000000);
-                encoded.push_back(1.0000000);
-            }
-            else
-            {
-                encoded.push_back(1.0000000);
-                encoded.push_back(0.0000000);
-            }
+            encoded.push_back(1.0000000);
+            encoded.push_back(0.0000000);
         }
     }
 
     return encoded;
 }
 
-static vector<double> TA(const string& seq, const string& seqName, const string& allowed, vector<string> keys, ifstream &file)
+static vector<double> TA(const string& seq, const string& seqName, const string& allowed, vector<string> keys, ifstream &file, const string& type)
 {
     vector<double> encoded;
-
-    // Read disorder file
+    // Read torsion angle file
     string line;
     string aas;
     vector<double> phis;
@@ -1567,12 +1493,12 @@ static vector<double> TA(const string& seq, const string& seqName, const string&
                     goto endLoop;
                 aas.push_back(line[0]);
             }
-            else if (counter == 3)
+            else if ((type == "spd33" && counter == 4) || (type == "spXout" && counter == 3))
             {
                 double val = stof(line);
                 phis.push_back(val);
             }
-            else if (counter == 4)
+            else if ((type == "spd33" && counter == 5) || (type == "spXout" && counter == 4))
             {
                 double val = stof(line);
                 psis.push_back(val);
@@ -1597,13 +1523,13 @@ static vector<double> TA(const string& seq, const string& seqName, const string&
     return encoded;
 }
 
-static vector<double> TAC(const string& seq, const string& seqName, const string& allowed, vector<string> keys, ifstream &file)
+static vector<double> TAC(const string& seq, const string& seqName, const string& allowed, vector<string> keys, ifstream &file, const string& type)
 {
     vector<double> encoded;
 
     double pi = 3.14159265359;
     
-    // Read disorder file
+    // Read torsion angle file
     string line;
     string aas;
     vector<double> phiSin;
@@ -1632,13 +1558,13 @@ static vector<double> TAC(const string& seq, const string& seqName, const string
                     goto endLoop;
                 aas.push_back(line[0]);
             }
-            else if (counter == 3)
+            else if ((type == "spd33" && counter == 4) || (type == "spXout" && counter == 3))
             {
                 double val = stof(line) * (pi / 180);
                 phiSin.push_back(sin(val));
                 phiCos.push_back(cos(val));
             }
-            else if (counter == 4)
+            else if ((type == "spd33" && counter == 5) || (type == "spXout" && counter == 4))
             {
                 double val = stof(line) * (pi / 180);
                 psiSin.push_back(sin(val));
@@ -1674,13 +1600,13 @@ static vector<double> TAC(const string& seq, const string& seqName, const string
     return encoded;
 }
 
-static vector<double> TAB(const string& seq, const string& seqName, const string& allowed, vector<string> keys, int n, ifstream &file)
+static vector<double> TAB(const string& seq, const string& seqName, const string& allowed, vector<string> keys, int n, ifstream &file, const string& type)
 {
     vector<double> encoded;
 
     double pi = 3.14159265359;
     
-    // Read disorder file
+    // Read torsion angle file
     string line;
     string aas;
     vector<double> phiSin;
@@ -1709,13 +1635,13 @@ static vector<double> TAB(const string& seq, const string& seqName, const string
                     goto endLoop;
                 aas.push_back(line[0]);
             }
-            else if (counter == 3)
+            else if ((type == "spd33" && counter == 4) || (type == "spXout" && counter == 3))
             {
                 double val = stof(line) * (pi / 180);
                 phiSin.push_back(sin(val));
                 phiCos.push_back(cos(val));
             }
-            else if (counter == 4)
+            else if ((type == "spd33" && counter == 5) || (type == "spXout" && counter == 4))
             {
                 double val = stof(line) * (pi / 180);
                 psiSin.push_back(sin(val));
@@ -1755,13 +1681,13 @@ static vector<double> TAB(const string& seq, const string& seqName, const string
     return encoded;
 }
 
-static vector<double> TAAC(const string& seq, const string& seqName, const string& allowed, vector<string> keys, int n, ifstream &file)
+static vector<double> TAAC(const string& seq, const string& seqName, const string& allowed, vector<string> keys, int n, ifstream &file, const string& type)
 {
     vector<double> encoded;
 
     double pi = 3.14159265359;
     
-    // Read disorder file
+    // Read torsion angle file
     string line;
     string aas;
     vector<double> phiSin;
@@ -1790,13 +1716,13 @@ static vector<double> TAAC(const string& seq, const string& seqName, const strin
                     goto endLoop;
                 aas.push_back(line[0]);
             }
-            else if (counter == 3)
+            else if ((type == "spd33" && counter == 4) || (type == "spXout" && counter == 3))
             {
                 double val = stof(line) * (pi / 180);
                 phiSin.push_back(sin(val));
                 phiCos.push_back(cos(val));
             }
-            else if (counter == 4)
+            else if ((type == "spd33" && counter == 5) || (type == "spXout" && counter == 4))
             {
                 double val = stof(line) * (pi / 180);
                 psiSin.push_back(sin(val));
@@ -1834,11 +1760,11 @@ static vector<double> TAAC(const string& seq, const string& seqName, const strin
     return encoded;
 }
 
-static vector<double> ASA(const string& seq, const string& seqName, const string& allowed, vector<string> keys, ifstream &file)
+static vector<double> ASA(const string& seq, const string& seqName, const string& allowed, vector<string> keys, ifstream &file, const string& type)
 {
     vector<double> encoded;
 
-    // Read disorder file
+    // Read ASA file
     string line;
     string aas;
     vector<double> asas;
@@ -1864,7 +1790,7 @@ static vector<double> ASA(const string& seq, const string& seqName, const string
                     goto endLoop;
                 aas.push_back(line[0]);
             }
-            else if (counter == 10)
+            else if ((type == "spd33" && counter == 3) || (type == "spXout" && counter == 10))
             {
                 double val = stof(line);
                 asas.push_back(val);
@@ -2090,11 +2016,13 @@ static vector<double> EBGW(const string& seq, const string& allowed, vector<stri
     return encoded;
 }
 
-static vector<double> PSSM(const string& seq, const string& allowed, vector<string> keys, ifstream &file)
+static vector<double> PSSM(const string& seq, const string& seqName, const string& allowed, vector<string> keys, ifstream &file)
 {
     vector<double> encoded;
 
     // Read PSSM file
+    string aas;
+    vector<vector<double>> elements;
     string line;
     getline(file, line); // Skip the first line
     getline(file, line); // Skip the second line
@@ -2102,8 +2030,9 @@ static vector<double> PSSM(const string& seq, const string& allowed, vector<stri
     while (getline(file, line))
     {
         int counter = 0;
+        vector<double> values;
         istringstream iss(line);
-        for (string line; iss >> line && counter < 22;) 
+        for (string line; iss >> line && counter < 22; counter++) 
         {
             if(counter == 1)
             {
@@ -2118,22 +2047,42 @@ static vector<double> PSSM(const string& seq, const string& allowed, vector<stri
                 }
                 if (!exists)
                     goto endLoop;
+                aas.push_back(line[0]);
             }
             if (counter >= 2)
             {
-                encoded.push_back(stof(line));
-            };
-            counter++;
+                double val = stof(line);
+                values.push_back(val);
+            }
         }
         endLoop:;
+        elements.push_back(values);
     }
+
+    size_t found = aas.find(seq);
+    if (found == string::npos)
+        cout << "Error: Sequence " << seqName << " not found in the file.";
+    else
+    {
+        int l = seq.length();
+        for (int i = found; i < found + l; i++)
+        {
+            for (double val : elements[i])
+            {
+                encoded.push_back(val);
+            }
+        }
+    }
+
     return encoded;
 }
 
-static vector<double> PSSMAAC(const string& seq, vector<string> keys, const string& orderString, ifstream &file)
+static vector<double> PSSMAAC(const string& seq, const string& seqName, vector<string> keys, const string& orderString, ifstream &file)
 {
     vector<double> encoded;
 
+    string aas;
+    vector<vector<double>> elements;
     map<char, double> count;
     int l = seq.length();
     for (char const &c : orderString)
@@ -2148,8 +2097,9 @@ static vector<double> PSSMAAC(const string& seq, vector<string> keys, const stri
     while (getline(file, line))
     {
         int counter = 0;
+        vector<double> values;
         istringstream iss(line);
-        for (string line; iss >> line && counter < 22;) 
+        for (string line; iss >> line && counter < 22; counter++) 
         {
             if(counter == 1)
             {
@@ -2164,16 +2114,33 @@ static vector<double> PSSMAAC(const string& seq, vector<string> keys, const stri
                 }
                 if (!exists)
                     goto endLoop;
+                aas.push_back(line[0]);
             }
             if (counter >= 2)
             {
-                int val = stoi(line);
-                count[orderString[counter - 2]] += val;
+                double val = stof(line);
+                values.push_back(val);
             };
-            counter++;
         }
         endLoop:;
+        elements.push_back(values);
     }
+
+    size_t found = aas.find(seq);
+    if (found == string::npos)
+        cout << "Error: Sequence " << seqName << " not found in the file.";
+    else
+    {
+        int l = seq.length();
+        for (int i = found; i < found + l; i++)
+        {
+            for (int j = 0; j < orderString.size(); j++)
+            {
+                count[orderString[j]] += elements[i][j];
+            }
+        }
+    }
+
     for (char const &c : orderString)
     {
         encoded.push_back(count[c] / (l * 1.0));
@@ -2181,10 +2148,12 @@ static vector<double> PSSMAAC(const string& seq, vector<string> keys, const stri
     return encoded;
 }
 
-static vector<double> BiPSSM(const string& seq, vector<string> keys, const string& orderString, int n, ifstream &file)
+static vector<double> BiPSSM(const string& seq, const string& seqName, vector<string> keys, const string& orderString, int n, ifstream &file)
 {
     vector<double> encoded;
 
+    string aas;
+    vector<vector<double>> elements;
     map<string, double> count;
     int l = seq.length();
     for (string const &key : keys)
@@ -2193,8 +2162,6 @@ static vector<double> BiPSSM(const string& seq, vector<string> keys, const strin
     }
     // Read PSSM file
     string line;
-    int lines = 0;
-    queue<array<int, 20>> prevLines;
     getline(file, line); // Skip the first line
     getline(file, line); // Skip the second line
     getline(file, line); // Skip the third line
@@ -2202,10 +2169,11 @@ static vector<double> BiPSSM(const string& seq, vector<string> keys, const strin
     {
         array<int, 20> newLine;
         int counter = 0;
+        vector<double> values;
         istringstream iss(line);
-        for (string line; iss >> line && counter < 22;) 
+        for (string line; iss >> line && counter < 22; counter++) 
         {
-            if(counter == 1)
+            if (counter == 1)
             {
                 bool exists = false;
                 for (char const &c : orderString)
@@ -2218,34 +2186,39 @@ static vector<double> BiPSSM(const string& seq, vector<string> keys, const strin
                 }
                 if (!exists)
                     goto endLoop;
+                aas.push_back(line[0]);
             }
             if (counter >= 2)
             {
-                int val = stoi(line);
-                newLine[counter - 2] = val;
-                if (lines >= n)
-                {
-                    char c1 = orderString[counter - 2];
-                    for (int i = 0; i < 20; i++)
-                    {
-                        char c2 = orderString[i];
-                        int val2 = prevLines.front()[i];
-                        string key(1, c1);
-                        key.push_back(c2);
-                        count[key] += (val * val2);
-                    }
-                }
+                double val = stof(line);
+                values.push_back(val);
             };
-            counter++;
-            if (counter == 22)
-            {
-                prevLines.push(newLine);
-                if(lines >= n)
-                    prevLines.pop();
-                lines++;
-            }
         }
         endLoop:;
+        elements.push_back(values);
+    }
+
+    size_t found = aas.find(seq);
+    if (found == string::npos)
+        cout << "Error: Sequence " << seqName << " not found in the file.";
+    else
+    {
+        int lines = 0;
+        int l = seq.length();
+        for (int i = found; i < found + l - n; i++)
+        {
+            for (int j = 0; j < orderString.size(); j++)
+            {
+                char c1 = orderString[j];
+                for (int k = 0; k < orderString.size(); k++)
+                {
+                    char c2 = orderString[k];
+                    string key(1, c1);
+                    key.push_back(c2);
+                    count[key] += elements[i][j] * elements[i + n][k];
+                }
+            }
+        }
     }
 
     for (string const &key : keys) 
@@ -2255,10 +2228,12 @@ static vector<double> BiPSSM(const string& seq, vector<string> keys, const strin
     return encoded;
 }
 
-static vector<double> PSSMAC(const string& seq, vector<string> keys, const string& orderString, int n, ifstream &file)
+static vector<double> PSSMAC(const string& seq, const string& seqName, vector<string> keys, const string& orderString, int n, ifstream &file)
 {
     vector<double> encoded;
 
+    string aas;
+    vector<vector<double>> elements;
     map<char, double> avg;
     map<string, double> count;
     int l = seq.length();
@@ -2272,7 +2247,6 @@ static vector<double> PSSMAC(const string& seq, vector<string> keys, const strin
     }
     // Read PSSM file
     string line;
-    vector<array<int, 20>> lines;
     getline(file, line); // Skip the first line
     getline(file, line); // Skip the second line
     getline(file, line); // Skip the third line
@@ -2280,8 +2254,9 @@ static vector<double> PSSMAC(const string& seq, vector<string> keys, const strin
     {
         array<int, 20> newLine;
         int counter = 0;
+        vector<double> values;
         istringstream iss(line);
-        for (string line; iss >> line && counter < 22;) 
+        for (string line; iss >> line && counter < 22; counter++) 
         {
             if(counter == 1)
             {
@@ -2296,54 +2271,64 @@ static vector<double> PSSMAC(const string& seq, vector<string> keys, const strin
                 }
                 if (!exists)
                     goto endLoop;
+                aas.push_back(line[0]);
             }
             if (counter >= 2)
             {
-                int val = stoi(line);
-                newLine[counter - 2] = val;
-                avg[orderString[counter - 2]] += val;
-            };
-            counter++;
-            if (counter == 22)
-            {
-                lines.push_back(newLine);
+                double val = stof(line);
+                values.push_back(val);
             }
         }
         endLoop:;
+        elements.push_back(values);
     }
 
-    for (char const &c : orderString)
+    size_t found = aas.find(seq);
+    if (found == string::npos)
+        cout << "Error: Sequence " << seqName << " not found in the file.";
+    else
     {
-        avg[c] /= l;
-    }
-
-    for (int i = 1; i <= n; i++)
-    {
-        for (int j = 0; j < lines.size() - i; j++)
+        for (int i = found; i < found + l; i++)
         {
-            for (int k = 0; k < 20; k++)
+            for (int j = 0; j < orderString.size(); j++)
             {
-                char c = orderString[k];
-                string key = to_string(i);
-                key.push_back(c);
-                count[key] += ((lines[j][k] - avg[c]) * (lines[j + i][k] - avg[c]));
+                avg[orderString[j]] += elements[i][j];
             }
         }
+        for (char const &c : orderString)
+        {
+            avg[c] /= l;
+        }
+        for (int i = 1; i <= n; i++)
+        {
+            for (int j = found; j < found + l - i; j++)
+            {
+                for (int k = 0; k < 20; k++)
+                {
+                    char c = orderString[k];
+                    string key = to_string(i);
+                    key.push_back(c);
+                    count[key] += ((elements[j][k] - avg[c]) * (elements[j + i][k] - avg[c]));
+                }
+            }
+        }
+        for (string const &key : keys) 
+        {
+            encoded.push_back(count[key] / (l - (n * 1.0)));
+        }
     }
-    
-    for (string const &key : keys) 
-    {
-        encoded.push_back(count[key] / (l - (n * 1.0)));
-    }
+
     return encoded;
 }
 
-static vector<double> PPSSM(const string& seq, vector<string> keys, const string& orderString, int n, ifstream &file)
+static vector<double> PPSSM(const string& seq, const string& seqName, vector<string> keys, const string& orderString, int n, ifstream &file)
 {
     vector<double> encoded;
     
     vector<double> avg;
     map<char, double> avgChar;
+    string aas;
+    vector<vector<double>> elements;
     map<string, double> count;
     int l = seq.length();
     for (char const &c : seq)
@@ -2369,8 +2354,9 @@ static vector<double> PPSSM(const string& seq, vector<string> keys, const string
     {
         array<double, 20> newLine;
         int counter = 0;
+        vector<double> values;
         istringstream iss(line);
-        for (string line; iss >> line && counter < 22;) 
+        for (string line; iss >> line && counter < 22; counter++) 
         {
             if(counter == 1)
             {
@@ -2385,51 +2371,59 @@ static vector<double> PPSSM(const string& seq, vector<string> keys, const string
                 }
                 if (!exists)
                     goto endLoop;
+                aas.push_back(line[0]);
             }
             if (counter >= 2)
             {
-                int val = stoi(line);
-                newLine[counter - 2] = val;
-                avg[lineCount] += val;
-            };
-            counter++;
-            if (counter == 22)
-            {
-                lineCount++;
-                lines.push_back(newLine);
+                double val = stof(line);
+                values.push_back(val);
             }
         }
         endLoop:;
+        elements.push_back(values);
     }
 
-    for (int i = 0; i < l; i++)
+    size_t found = aas.find(seq);
+    if (found == string::npos)
+        cout << "Error: Sequence " << seqName << " not found in the file.";
+    else
     {
-        avg[i] /= 20;
-        double den = 0;
-        for (double const &val : lines[i])
+        for (int i = found; i < found + l; i++)
         {
-            den += pow(val - avg[i], 2);
+            for (int j = 0; j < orderString.size(); j++)
+            {
+                avg[i] += elements[i][j];
+            }
         }
-        den = sqrt(den / 20);
-        for (int j = 0; j < 20; j++)
+        for (int i = found; i < found + l; i++)
         {
-            lines[i][j] -= avg[i];
-            lines[i][j] /= den;
-            string key(1, orderString[j]);
-            count["M" + key] += lines[i][j];
-            if (i >= n)
-                count["G" + key] += pow(lines[i - n][j] - lines[i][j], 2);
+            avg[i] /= 20;
+            double den = 0;
+            for (double const &val : elements[i])
+            {
+                den += pow(val - avg[i], 2);
+            }
+            den = sqrt(den / 20);
+            for (int j = 0; j < 20; j++)
+            {
+                elements[i][j] -= avg[i];
+                elements[i][j] /= den;
+                string key(1, orderString[j]);
+                count["S" + key] += elements[i][j];
+                if (i >= found + n)
+                    count["R" + key] += pow(elements[i - n][j] - elements[i][j], 2);
+            }
         }
-    }
 
-    int counter = 0;
-    for (string const &key : keys) 
-    {
-        if (counter < 20)
-            encoded.push_back(count[key] / l);
-        else
-            encoded.push_back(count[key] / (l - n));
-        counter++;
+        int counter = 0;
+        for (string const &key : keys) 
+        {
+            if (counter < 20)
+                encoded.push_back(count[key] / l);
+            else
+                encoded.push_back(count[key] / (l - n));
+            counter++;
+        }
     }
     
     return encoded;
